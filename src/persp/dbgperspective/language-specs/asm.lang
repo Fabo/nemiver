@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+ Authors: Fabien Parent
+ Copyright (C) 2011 Fabien Parent <parent.f@gmail.com>
+
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Library General Public
+ License as published by the Free Software Foundation; either
+ version 2 of the License, or (at your option) any later version.
+
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Library General Public License for more details.
+
+ You should have received a copy of the GNU Library General Public
+ License along with this library; if not, write to the
+ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ Boston, MA 02111-1307, USA.
+
+-->
+<language id="asm" _name="Assembly" version="2.0" _section="Others">
+  <metadata>
+    <property name="mimetypes">text/x-asm</property>
+    <property name="globs">*.asm;*.s</property>
+    <property name="line-comment-start">#</property>
+    <property name="block-comment-start">/*</property>
+    <property name="block-comment-end">*/</property>
+  </metadata>
+
+  <styles>
+    <style id="register"  _name="Register"       map-to="def:identifier"/>
+    <style id="optcode"   _name="Opt-Code"       map-to="def:keyword"/>
+    <style id="address"   _name="Memory Address" map-to="def:base-n-integer"/>
+    <style id="label"     _name="Label"          map-to="def:type"/>
+    <style id="directive" _name="Directive"      map-to="def:preprocessor"/>
+    <style id="offset"    _name="Offset"         map-to="def:decimal"/>
+  </styles>
+
+  <definitions>
+    <!-- Registers -->
+    <context id="registers" style-ref="register">
+      <keyword>[a-d]l</keyword>
+      <keyword>[a-d]h</keyword>
+      <keyword>[e,r]?[a-d]x</keyword>
+      <keyword>[e,r]?[s,d]i</keyword>
+      <keyword>[e,r]?[s,b,i]p</keyword>
+      <keyword>[c-g,s]s</keyword>
+      <keyword>[e,r]?flags</keyword>
+      <keyword>cr[0,4-8]</keyword>
+      <keyword>st\([0-7]\)</keyword>
+      <keyword>x?mm[0-7]</keyword>
+      <keyword>orig\_eax</keyword>
+      <keyword>mxcsr</keyword>
+      <keyword>fctrl</keyword>
+      <keyword>fstat</keyword>
+      <keyword>ftag</keyword>
+      <keyword>fisef</keyword>
+      <keyword>fioff</keyword>
+      <keyword>foseg</keyword>
+      <keyword>fooff</keyword>
+      <keyword>fop</keyword>
+      <keyword>r([8-9]|1[0-5])[d,w,b]?</keyword>
+      <keyword>dr[0-3,6-7]</keyword>
+      <keyword>tr[3-7]?</keyword>
+      <keyword>[g,l,i]dtr</keyword>
+      <keyword>[s,b]pl</keyword>
+      <keyword>[s,d]il</keyword>
+    </context>
+
+    <define-regex id="symbol">([a-zA-Z0-9_.$]+)</define-regex>
+
+    <context id="label" style-ref="label">
+        <match>[a-zA-Z0-9_.$]+:</match>
+    </context>
+
+    <context id="directive" style-ref="directive">
+        <match>\.[a-zA-Z0-9_.$]+.*;</match>
+    </context>
+
+    <context id="directive-eol" style-ref="directive">
+        <match>\.[a-zA-Z0-9_.$]+.*$</match>
+    </context>
+
+    <context id="instruction">
+      <match>^\s*([a-zA-Z0-9_.$]+)</match>
+      <include>
+        <context id="optcode" sub-pattern="1" style-ref="optcode"/>
+      </include>
+    </context>
+
+    <context id="instruction-eol">
+      <match>;\s*([a-zA-Z0-9_.$]+).*$</match>
+      <include>
+        <context id="optcode" sub-pattern="1" style-ref="optcode"/>
+      </include>
+    </context>
+
+    <context id="asm" class="no-spell-check">
+      <include>
+        <context ref="label"/>
+        <context ref="directive"/>
+        <context ref="directive-eol"/>
+
+        <context ref="instruction"/>
+        <context ref="instruction-eol"/>
+
+        <context ref="def:decimal"/>
+        <context ref="def:hexadecimal"/>
+        <context ref="def:octal"/>
+        <context ref="def:float"/>
+        <context ref="def:string"/>
+        <context ref="registers"/>
+        <context ref="def:shell-like-comment"/>
+        <context ref="def:c-like-comment-multiline"/>
+        <context ref="def:c-like-close-comment-outside-comment"/>
+
+      </include>
+    </context>
+
+  </definitions>
+</language>

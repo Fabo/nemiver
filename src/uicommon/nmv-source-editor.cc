@@ -1288,34 +1288,15 @@ SourceEditor::get_file_mime_type (const UString &a_path,
 /// Returns true upon successful completion, false otherwise.
 bool
 SourceEditor::setup_buffer_mime_and_lang (Glib::RefPtr<Buffer> &a_buf,
-					  const std::string &a_mime_type)
+                                          const std::string &a_mime_type,
+                                          const std::string &a_path)
 {
     NEMIVER_TRY
 
     Glib::RefPtr<LanguageManager> lang_manager =
         LanguageManager::get_default ();
-    Glib::RefPtr<Language> lang;
-    std::vector<std::string> lang_ids = lang_manager->get_language_ids ();
-    for (std::vector<std::string>::const_iterator it = lang_ids.begin ();
-         it != lang_ids.end ();
-         ++it) {
-        Glib::RefPtr<Gsv::Language> candidate =
-            lang_manager->get_language (*it);
-        std::vector<Glib::ustring> mime_types = candidate->get_mime_types ();
-        std::vector<Glib::ustring>::const_iterator mime_it;
-        for (mime_it = mime_types.begin ();
-             mime_it != mime_types.end ();
-             ++mime_it) {
-            if (*mime_it == a_mime_type) {
-                // one of the mime types associated with this language matches
-                // the mime type of our file, so use this language
-                lang = candidate;
-                break;  // no need to look at further mime types
-            }
-        }
-        // we found a matching language, so stop looking for other languages
-        if (lang) break;
-    }
+    Glib::RefPtr<Language> lang =
+        lang_manager->guess_language (a_path, a_mime_type);
 
     if (!a_buf)
         a_buf = Buffer::create (lang);
@@ -1365,10 +1346,11 @@ SourceEditor::load_file (const UString &a_path,
         return false;
     }
 
-    if (!setup_buffer_mime_and_lang (a_source_buffer, mime_type)) {
+    if (!setup_buffer_mime_and_lang (a_source_buffer, mime_type, path)) {
         LOG_ERROR ("Could not setup source buffer mime type or language");
         return false;
     }
+
     THROW_IF_FAIL (a_source_buffer);
 
     gint buf_size = 10 * 1024;
@@ -1486,7 +1468,7 @@ SourceEditor::load_asm (const common::DisassembleInfo &a_info,
 
     NEMIVER_TRY
 
-    std::string mime_type = "text/x-asm";
+    std::string mime_type = "text/x-disassembly";
     if (!setup_buffer_mime_and_lang (a_buf, mime_type)) {
         LOG_ERROR ("Could not setup source buffer mime type of language");
         return false;
