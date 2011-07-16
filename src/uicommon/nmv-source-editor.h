@@ -118,8 +118,9 @@ public:
 				    UString &a_mime_type);
 
     static bool setup_buffer_mime_and_lang (Glib::RefPtr<Buffer> &a_buf,
-					    const std::string &a_mime_type =
-					    "text/x-c++");
+                                            const std::string &a_mime_type =
+                                                "text/x-c++",
+                                            const std::string &a_path = "");
 
     static Glib::RefPtr<Buffer> create_source_buffer ();
 

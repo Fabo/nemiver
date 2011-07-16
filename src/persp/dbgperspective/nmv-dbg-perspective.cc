@@ -447,6 +447,7 @@ private:
     void add_perspective_menu_entries ();
     void init_perspective_menu_entries ();
     void add_perspective_toolbar_entries ();
+    void init_language_manager ();
     void init_icon_factory ();
     void init_actions ();
     void init_toolbar ();
@@ -3271,6 +3272,24 @@ DBGPerspective::add_perspective_toolbar_entries ()
 }
 
 void
+DBGPerspective::init_language_manager ()
+{
+    NEMIVER_TRY
+
+    string relative_path = Glib::locale_from_utf8 ("language-specs");
+    string plugin_dir_path = Glib::locale_from_utf8 (plugin_path ());
+    string absolute_path = Glib::build_filename (plugin_dir_path, relative_path);
+
+    Glib::RefPtr<Gsv::LanguageManager> language_mgr =
+            Gsv::LanguageManager::get_default ();
+    vector<string> search_paths = language_mgr->get_search_path ();
+    search_paths.insert (search_paths.begin (), absolute_path);
+    language_mgr->set_search_path (search_paths);
+
+    NEMIVER_CATCH_NOX
+}
+
+void
 DBGPerspective::init_icon_factory ()
 {
     add_stock_icon (nemiver::SET_BREAKPOINT, "icons", "set-breakpoint.xpm");
@@ -5416,6 +5435,7 @@ DBGPerspective::do_init (IWorkbench *a_workbench)
 {
     THROW_IF_FAIL (m_priv);
     m_priv->workbench = a_workbench;
+    init_language_manager ();
     init_icon_factory ();
     init_actions ();
     init_toolbar ();
@@ -5777,7 +5797,7 @@ DBGPerspective::switch_to_asm (const common::DisassembleInfo &a_info,
 
     Glib::RefPtr<Gsv::Buffer> asm_buf;
     if ((asm_buf = a_source_editor->get_assembly_source_buffer ()) == 0) {
-        SourceEditor::setup_buffer_mime_and_lang (asm_buf, "text/x-asm");
+        SourceEditor::setup_buffer_mime_and_lang (asm_buf, "text/x-disassembly");
         a_source_editor->register_assembly_source_buffer (asm_buf);
         asm_buf = a_source_editor->get_assembly_source_buffer ();
         RETURN_IF_FAIL (asm_buf);
@@ -5847,7 +5867,9 @@ DBGPerspective::switch_to_source_code ()
             return;
         }
         SourceEditor::get_file_mime_type (absolute_path, mime_type);
-        SourceEditor::setup_buffer_mime_and_lang (source_buf, mime_type);
+        SourceEditor::setup_buffer_mime_and_lang (source_buf,
+                                                  mime_type,
+                                                  absolute_path);
         m_priv->load_file (absolute_path, source_buf);
         source_editor->register_non_assembly_source_buffer (source_buf);
     }

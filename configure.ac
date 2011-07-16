@@ -453,6 +453,7 @@ src/Makefile
     src/persp/dbgperspective/icons/Makefile
     src/persp/dbgperspective/sqlscripts/Makefile
     src/persp/dbgperspective/sqlscripts/sqlite/Makefile
+    src/persp/dbgperspective/language-specs/Makefile
 data/Makefile
     data/icons/Makefile
         data/icons/16x16/Makefile

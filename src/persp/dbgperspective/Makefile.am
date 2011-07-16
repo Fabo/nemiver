@@ -1,4 +1,4 @@
-SUBDIRS=ui menus icons sqlscripts
+SUBDIRS=ui menus icons sqlscripts language-specs
 
 h=$(abs_srcdir)
 
