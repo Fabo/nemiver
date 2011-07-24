@@ -5772,7 +5772,7 @@ DBGPerspective::switch_to_asm (const common::DisassembleInfo &a_info,
 
     Glib::RefPtr<Gsv::Buffer> asm_buf;
     if ((asm_buf = a_source_editor->get_assembly_source_buffer ()) == 0) {
-        SourceEditor::setup_buffer_mime_and_lang (asm_buf, "test/x-asm");
+        SourceEditor::setup_buffer_mime_and_lang (asm_buf, "text/x-asm");
         a_source_editor->register_assembly_source_buffer (asm_buf);
         asm_buf = a_source_editor->get_assembly_source_buffer ();
         RETURN_IF_FAIL (asm_buf);
