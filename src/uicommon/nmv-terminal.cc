@@ -335,6 +335,12 @@ Terminal::feed (const UString &a_text)
         vte_terminal_feed (m_priv->vte, a_text.c_str (), a_text.size ());
 }
 
+int
+Terminal::slave_fd () const
+{
+    THROW_IF_FAIL (m_priv);
+    return m_priv->slave_pty;
+}
 
 NEMIVER_END_NAMESPACE(nemiver)
 

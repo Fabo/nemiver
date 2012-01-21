@@ -39,6 +39,7 @@ extern const char *TARGET_TERMINAL_VIEW_TITLE;
 extern const char *BREAKPOINTS_VIEW_TITLE;
 extern const char *REGISTERS_VIEW_TITLE;
 extern const char *MEMORY_VIEW_TITLE;
+extern const char *CONSOLE_VIEW_TITLE;
 
 enum ViewsIndex
 {
@@ -47,8 +48,9 @@ enum ViewsIndex
     BREAKPOINTS_VIEW_INDEX,
     REGISTERS_VIEW_INDEX,
 #ifdef WITH_MEMORYVIEW
-    MEMORY_VIEW_INDEX
+    MEMORY_VIEW_INDEX,
 #endif // WITH_MEMORYVIEW
+    CONSOLE_VIEW_INDEX
 };
 
 class SourceEditor;

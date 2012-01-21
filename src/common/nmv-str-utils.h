@@ -25,6 +25,7 @@
 #ifndef __NMV_STR_UTILS_H__
 #define __NMV_STR_UTILS_H__
 #include "nmv-ustring.h"
+#include <sstream>
 
 NEMIVER_BEGIN_NAMESPACE (nemiver)
 NEMIVER_BEGIN_NAMESPACE (str_utils)
@@ -51,6 +52,25 @@ UString join (const vector<UString> &a_elements,
 UString join (vector<UString>::const_iterator &a_from,
               vector<UString>::const_iterator &a_to,
               const UString &a_delim=" ");
+
+template<typename T>
+T
+from_string (const std::string &a_string)
+{
+    std::istringstream is (a_string);
+    T out;
+    is >> out;
+    return out;
+}
+
+template<typename T>
+std::string
+to_string (const T &a_value)
+{
+    std::ostringstream os;
+    os << a_value;
+    return os.str ();
+}
 
 template<typename S>
 void

@@ -71,7 +71,8 @@ $(h)/nmv-sql-statement.cc \
 $(h)/nmv-insert-statement.cc \
 $(h)/nmv-delete-statement.cc \
 $(h)/nmv-proc-utils.cc \
-$(h)/nmv-proc-mgr.cc
+$(h)/nmv-proc-mgr.cc \
+$(h)/nmv-console.cc
 
 publicheaders_DATA=$(headers)
 publicheadersdir=$(NEMIVER_INCLUDE_DIR)/common

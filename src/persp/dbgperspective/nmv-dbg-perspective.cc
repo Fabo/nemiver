@@ -53,6 +53,7 @@
 #include "common/nmv-str-utils.h"
 #include "common/nmv-address.h"
 #include "common/nmv-loc.h"
+#include "nmv-dbg-console.h"
 #include "nmv-sess-mgr.h"
 #include "nmv-dbg-perspective.h"
 #include "nmv-source-editor.h"
@@ -118,6 +119,7 @@ const char *TARGET_TERMINAL_VIEW_TITLE = _("Target Terminal");
 const char *BREAKPOINTS_VIEW_TITLE     = _("Breakpoints");
 const char *REGISTERS_VIEW_TITLE       = _("Registers");
 const char *MEMORY_VIEW_TITLE          = _("Memory");
+const char *CONSOLE_VIEW_TITLE         = _("Console");
 
 const char *CAPTION_SESSION_NAME = "captionname";
 const char *SESSION_NAME = "sessionname";
@@ -412,6 +414,7 @@ private:
     void on_notebook_tabs_reordered(Gtk::Widget* a_page, guint a_page_num);
 
     void on_layout_changed ();
+    void on_file_opened (UString a_path);
     void on_activate_context_view ();
     void on_activate_target_terminal_view ();
     void on_activate_breakpoints_view ();
@@ -739,6 +742,10 @@ public:
 
     Gtk::ScrolledWindow& get_local_vars_inspector_scrolled_win ();
 
+    Terminal& console_terminal ();
+
+    Gtk::Box& console_box ();
+
     Terminal& get_terminal ();
 
     Gtk::Box& get_terminal_box ();
@@ -897,6 +904,9 @@ struct DBGPerspective::Priv {
     Path2MonitorMap path_2_monitor_map;
     SafePtr<LocalVarsInspector> variables_editor;
     SafePtr<Gtk::ScrolledWindow> variables_editor_scrolled_win;
+    SafePtr<Terminal> console_terminal;
+    SafePtr<DBGConsole> dbg_console;
+    SafePtr<Gtk::Box> console_box;
     SafePtr<Terminal> terminal;
     SafePtr<Gtk::Box> terminal_box;
     SafePtr<Gtk::ScrolledWindow> breakpoints_scrolled_win;
@@ -1761,6 +1771,17 @@ DBGPerspective::on_switch_page_signal (Gtk::Widget *a_page,
     NEMIVER_TRY
     m_priv->current_page_num = a_page_num;
     LOG_DD ("current_page_num: " << m_priv->current_page_num);
+
+    map<int, SourceEditor*>::iterator iter, nil;
+    nil = m_priv->pagenum_2_source_editor_map.end ();
+    iter = m_priv->pagenum_2_source_editor_map.find (m_priv->current_page_num);
+    if (iter != nil) {
+        SourceEditor *editor = get_current_source_editor ();
+        if (editor) {
+            THROW_IF_FAIL (m_priv->dbg_console);
+            m_priv->dbg_console->current_file_path (editor->get_path ());
+        }
+    }
     NEMIVER_CATCH
 }
 
@@ -2811,6 +2832,14 @@ DBGPerspective::on_layout_changed ()
 }
 
 void
+DBGPerspective::on_file_opened (UString a_file)
+{
+    NEMIVER_TRY
+    open_file (a_file, -1);
+    NEMIVER_CATCH
+}
+
+void
 DBGPerspective::on_activate_context_view ()
 {
     LOG_FUNCTION_SCOPE_NORMAL_DD;
@@ -3685,6 +3714,11 @@ DBGPerspective::init_body ()
         (sigc::mem_fun (this, &DBGPerspective::on_notebook_tabs_reordered));
 #endif
 
+    IDebuggerSafePtr& dbg = debugger ();
+    THROW_IF_FAIL (dbg);
+    m_priv->dbg_console.reset
+                (new DBGConsole (console_terminal ().slave_fd (), *dbg));
+
     UString layout = DBG_PERSPECTIVE_DEFAULT_LAYOUT;
     NEMIVER_TRY
     conf_mgr.get_key_value (CONF_KEY_DBG_PERSPECTIVE_LAYOUT, layout);
@@ -3732,6 +3766,10 @@ DBGPerspective::init_signals ()
 
     m_priv->layout_mgr.layout_changed_signal ().connect (sigc::mem_fun
             (*this, &DBGPerspective::on_layout_changed));
+
+    THROW_IF_FAIL (m_priv->dbg_console);
+    m_priv->dbg_console->file_opened_signal ().connect (sigc::mem_fun
+        (*this, &DBGPerspective::on_file_opened));
 }
 
 /// Connect slots (callbacks) to the signals emitted by the
@@ -4928,6 +4966,9 @@ DBGPerspective::add_views_to_layout ()
 {
     THROW_IF_FAIL (m_priv);
 
+    m_priv->layout ().add_view (console_box (),
+                                CONSOLE_VIEW_TITLE,
+                                CONSOLE_VIEW_INDEX);
 #ifdef WITH_MEMORYVIEW
     m_priv->layout ().add_view (get_memory_view ().widget (),
                                 MEMORY_VIEW_TITLE,
@@ -8011,6 +8052,39 @@ DBGPerspective::get_local_vars_inspector_scrolled_win ()
     return *m_priv->variables_editor_scrolled_win;
 }
 
+Terminal&
+DBGPerspective::console_terminal ()
+{
+    THROW_IF_FAIL (m_priv);
+    if (!m_priv->console_terminal) {
+        string relative_path = Glib::build_filename ("menus",
+                                                     "terminalmenu.xml");
+        string absolute_path;
+        THROW_IF_FAIL (build_absolute_resource_path
+            (Glib::filename_to_utf8 (relative_path), absolute_path));
+
+        m_priv->console_terminal.reset (new Terminal
+            (absolute_path, workbench ().get_ui_manager ()));
+    }
+    THROW_IF_FAIL (m_priv->console_terminal);
+    return *m_priv->console_terminal;
+}
+
+Gtk::Box&
+DBGPerspective::console_box ()
+{
+    THROW_IF_FAIL (m_priv);
+    if (!m_priv->console_box) {
+        m_priv->console_box.reset (new Gtk::HBox);
+        THROW_IF_FAIL (m_priv->console_box);
+        Gtk::VScrollbar *scrollbar = Gtk::manage (new Gtk::VScrollbar);
+        m_priv->console_box->pack_end (*scrollbar, false, false, 0);
+        m_priv->console_box->pack_start (console_terminal ().widget ());
+        scrollbar->set_adjustment (console_terminal ().adjustment ());
+    }
+    THROW_IF_FAIL (m_priv->console_box);
+    return *m_priv->console_box;
+}
 
 Terminal&
 DBGPerspective::get_terminal ()
